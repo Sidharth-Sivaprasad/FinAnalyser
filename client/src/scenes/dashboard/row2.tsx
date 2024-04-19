@@ -1,12 +1,137 @@
+import BoxHeader from "@/components/BoxHeader";
 import DashboardBox from "@/components/DasboardBox";
+import { useGetProductsQuery, useGetKpisQuery } from "@/state/api";
+import {
+	CartesianGrid,
+	Cell,
+	Legend,
+	Line,
+	LineChart,
+	Pie,
+	PieChart,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
+import { Box, useTheme } from "@mui/material";
+import { useMemo } from "react";
+import FlexBetween from "@/components/FlexBetween";
 
-type Props = {};
+const pieData = [
+	{
+		name: "Group A",
+		value: 600,
+	},
+	{
+		name: "Group B",
+		value: 300,
+	},
+];
 
-function Row2({}: Props) {
+function Row2() {
+	const { data: operationalData } = useGetKpisQuery();
+	const { data: productData } = useGetProductsQuery();
+
+	const { palette } = useTheme();
+	const pieColor = [palette.primary[800], palette.primary[300]];
+	const operationalExpenses = useMemo(() => {
+		return (
+			operationalData &&
+			operationalData[0].monthlyData.map(
+				({ month, operationalExpenses, nonOperationalExpenses }) => {
+					return {
+						name: month.substring(0, 3),
+						"Operational Expenses": operationalExpenses,
+						"Non Operational Expenses": nonOperationalExpenses,
+					};
+				}
+			)
+		);
+	}, [operationalData]);
 	return (
 		<>
-			<DashboardBox gridArea="d"></DashboardBox>
-			<DashboardBox gridArea="e"></DashboardBox>
+			<DashboardBox gridArea="d">
+				<BoxHeader
+					title="Operational vs Non-operational Expenses"
+					sideText="+1%"
+				/>
+				<ResponsiveContainer width="100%" height="100%">
+					<LineChart
+						data={operationalExpenses}
+						margin={{
+							top: 20,
+							right: 0,
+							left: -10,
+							bottom: 55,
+						}}
+					>
+						<CartesianGrid vertical={false} stroke={palette.grey[800]} />
+						<XAxis
+							dataKey="name"
+							tickLine={false}
+							style={{ fontSize: "10px" }}
+						/>
+						<YAxis
+							yAxisId="left"
+							tickLine={false}
+							orientation="left"
+							axisLine={false}
+							style={{ fontSize: "10px" }}
+						/>
+						<YAxis
+							yAxisId="right"
+							orientation="right"
+							tickLine={false}
+							axisLine={false}
+							style={{ fontSize: "10px" }}
+						/>
+						<Tooltip />
+
+						<Line
+							yAxisId="left"
+							type="monotone"
+							dataKey="Non Operational Expenses"
+							stroke={palette.tertiary[500]}
+						/>
+						<Line
+							yAxisId="right"
+							type="monotone"
+							dataKey="Operational Expenses"
+							stroke={palette.primary.main}
+						/>
+					</LineChart>
+				</ResponsiveContainer>
+			</DashboardBox>
+			<DashboardBox gridArea="e">
+				<BoxHeader title="Campaigns and Targets" sideText="+2%" />
+				<FlexBetween mt="0.25rem" gap="1.5rem" pr="1rem">
+					<PieChart
+						width={110}
+						height={100}
+						margin={{
+							top: 0,
+							right: -10,
+							left: 10,
+							bottom: 0,
+						}}
+					>
+						<Pie
+							data={pieData}
+							stroke="none"
+							innerRadius={18}
+							outerRadius={38}
+							paddingAngle={2}
+							dataKey="value"
+						>
+							{pieData.map((entry, index) => (
+								<Cell key={`cell-${index}`} fill={pieColor[index]} />
+							))}
+						</Pie>
+					</PieChart>
+					<Box ml="-0.7rem" flexBasis="40%"></Box>
+				</FlexBetween>
+			</DashboardBox>
 			<DashboardBox gridArea="f"></DashboardBox>
 		</>
 	);
